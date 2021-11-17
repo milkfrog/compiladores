@@ -135,3 +135,20 @@ GREATER_EQUAL: '>=';
 NOT_EQUAL: '!=';
 
 WHITE_SPACE: [\t\r\n]+ -> skip;
+
+LPAREN: '(';
+RPAREN: ')';
+
+LBRACE: '{';
+RBRACE: '}';
+
+LBRACK: '[';
+RBRACK: ']';
+
+SEMI: ';';
+
+COMMA: ',';
+
+DOT: '.';
+
+COLON: ':';
