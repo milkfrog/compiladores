@@ -1,19 +1,19 @@
 grammar CC20212;
 
-// Gramática CC-2021-2:
-
-program: (statement | funclist)?;
+program: ( statement | funclist)?;
 
 funclist: funcdef funclist | funcdef;
 
 funcdef: DEF IDENT '(' paramlist ')' '{' statelist '}';
 
-paramlist: (
-		( INT | FLOAT | STRING) IDENT ',' paramlist
+paramlist:
+	(
+		(INT | FLOAT | STRING) IDENT ',' paramlist
 		| ( INT | FLOAT | STRING) IDENT
 	)?;
 
-statement: (
+statement:
+	(
 		vardecl ';'
 		| atribstat ';'
 		| printstat ';'
@@ -26,7 +26,7 @@ statement: (
 		| ';'
 	);
 
-vardecl: ( INT | FLOAT | STRING) IDENT ( '[' INT_CONSTANT ']')*;
+vardecl: (INT | FLOAT | STRING) IDENT ( '[' INT_CONSTANT ']')*;
 
 atribstat: lvalue '=' ( expression | allocexpression | funccall);
 
@@ -61,7 +61,8 @@ term: unaryexpr ( ( '*' | '/' | '%') unaryexpr)*;
 
 unaryexpr: ( ( '+' | '-'))? factor;
 
-factor: (
+factor:
+	(
 		INT_CONSTANT
 		| FLOAT_CONSTANT
 		| STRING_CONSTANT
@@ -72,9 +73,7 @@ factor: (
 
 lvalue: IDENT ( '[' numexpression ']')*;
 
-// Nossa contribuição para finalizar a gramática:
-
-IDENT: [a-zA-Z_] ( [a-zA-Z0-9_])*;
+/* Nossa contribuição para finalizar a gramática: */
 
 INT: 'int';
 
@@ -134,15 +133,16 @@ GREATER_EQUAL: '>=';
 
 NOT_EQUAL: '!=';
 
-WHITE_SPACE: [\t\r\n]+ -> skip;
-
 LPAREN: '(';
+
 RPAREN: ')';
 
 LBRACE: '{';
+
 RBRACE: '}';
 
 LBRACK: '[';
+
 RBRACK: ']';
 
 SEMI: ';';
@@ -152,3 +152,7 @@ COMMA: ',';
 DOT: '.';
 
 COLON: ':';
+
+IDENT: [a-zA-Z_] ( [a-zA-Z0-9_])*;
+
+WHITESPACE: [ \t\r\n]+ -> skip;
