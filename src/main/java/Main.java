@@ -1,8 +1,10 @@
 import java.io.IOException;
+import java.util.HashSet;
 
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.Token;
 
 public class Main {
     public static void main(String[] args) throws IOException {
@@ -15,7 +17,21 @@ public class Main {
 
         cc20212Parser.program();
 
+        // verificando a existência de erros no analisador léxico:
         int erros = cc20212Parser.getNumberOfSyntaxErrors();
-        System.out.println(erros);
+        if (erros > 0)
+            System.out.println("Existem erros léxicos!");
+
+        // criando um set com os lexemas a partir dos tokens gerados pelo
+        // CommonTokenStream
+        HashSet<String> lexemas = new HashSet<String>();
+        for (Token token : commonTokenStream.getTokens()) {
+            int type = token.getType();
+            String symbolicName = CC20212Lexer.VOCABULARY.getSymbolicName(type);
+            if (symbolicName.equals("IDENT")) {
+                lexemas.add(token.getText());
+            }
+        }
+
     }
 }
