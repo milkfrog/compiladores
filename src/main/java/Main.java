@@ -35,7 +35,7 @@ public class Main {
                 System.out.println("Existem erros léxicos! O mesmo pode ser verificado acima");
 
             // criando um set com os lexemas a partir dos tokens gerados pelo
-            // CommonTokenStream
+            // CommonTokenStream (tabela de Simbolos):
             HashSet<String> lexemas = new HashSet<String>();
             int tipo;
             String symbolicName;
@@ -66,23 +66,39 @@ public class Main {
                 tokenList.add(itemLista);
             }
             // Salvando a tabela de tonkens em arquivo de saída:
-            File dirAtual = new File(".");
-            File dirSaidaToken = new File(dirAtual.getCanonicalPath() + "/saida_lexico/tabela_tokens");
+            File dirAtualToken = new File(".");
+            File dirSaidaToken = new File(dirAtualToken.getCanonicalPath() + "/saida_lexico/tabela_tokens");
             // verifica se ja não existe a pasta:
             if (!dirSaidaToken.exists()) {
                 dirSaidaToken.mkdirs();
             }
-            File dirArquivo = new File(dirSaidaToken + "/" + nomeArquivo + ".txt");
-            FileWriter fileWriter = new FileWriter(dirArquivo);
-            fileWriter.write(
+            File dirArquivoToken = new File(dirSaidaToken + "/" + nomeArquivo + ".txt");
+            FileWriter fileWriterToken = new FileWriter(dirArquivoToken);
+            fileWriterToken.write(
                     "--------------------------------------- Tabela de Tokens ---------------------------------------\n");
             for (String linha : tokenList) {
-                fileWriter.write(linha);
+                fileWriterToken.write(linha);
             }
-            fileWriter.close();
+            fileWriterToken.close();
 
             // Criando a tabela de Simbolos:
-
+            File dirAtualSimbolo = new File(".");
+            File dirSaidaSimbolo = new File(dirAtualSimbolo.getCanonicalPath() + "/saida_lexico/tabela_simbolos");
+            // verifica se ja não existe a pasta:
+            if (!dirSaidaSimbolo.exists()) {
+                dirSaidaSimbolo.mkdirs();
+            }
+            File dirArquivoSimbolo = new File(dirSaidaSimbolo + "/" + nomeArquivo + ".txt");
+            FileWriter fileWriterSimbolo = new FileWriter(dirArquivoSimbolo);
+            fileWriterSimbolo.write(
+                    "--------------------------------------- Tabela de Simbolos ---------------------------------------\n");
+            int contador = 1;
+            for (String linha : lexemas) {
+                fileWriterSimbolo.write(contador + "º Simbolo -> Lexema: \t" + linha + "\n");
+                contador++;
+            }
+            fileWriterSimbolo.close();
+            System.out.println("Finalizado a Análise Léxica!\nAs tabelas foram geradas na pasta saida_lexico!");
         } catch (Error e) {
             System.out.println(e.getMessage());
         }
