@@ -65,7 +65,6 @@ public class Main {
                         + indiceFinal + "\n";
                 tokenList.add(itemLista);
             }
-            System.out.println(tokenList);
             // Salvando a tabela de tonkens em arquivo de saída:
             File dirAtual = new File(".");
             File dirSaidaToken = new File(dirAtual.getCanonicalPath() + "/saida_lexico/tabela_tokens");
