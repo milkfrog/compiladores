@@ -72,7 +72,7 @@ public class Main {
             if (!dirSaidaToken.exists()) {
                 dirSaidaToken.mkdirs();
             }
-            File dirArquivo = new File(dirSaidaToken + "/" + nomeArquivo);
+            File dirArquivo = new File(dirSaidaToken + "/" + nomeArquivo + ".txt");
             FileWriter fileWriter = new FileWriter(dirArquivo);
             fileWriter.write(
                     "--------------------------------------- Tabela de Tokens ---------------------------------------\n");
@@ -80,6 +80,8 @@ public class Main {
                 fileWriter.write(linha);
             }
             fileWriter.close();
+
+            // Criando a tabela de Simbolos:
 
         } catch (Error e) {
             System.out.println(e.getMessage());
