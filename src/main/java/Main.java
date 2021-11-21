@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 
 import org.antlr.v4.runtime.CharStream;
@@ -20,18 +21,40 @@ public class Main {
         // verificando a existência de erros no analisador léxico:
         int erros = cc20212Parser.getNumberOfSyntaxErrors();
         if (erros > 0)
-            System.out.println("Existem erros léxicos!");
+            System.out.println("Existem erros léxicos! O mesmo pode ser verificado acima");
 
         // criando um set com os lexemas a partir dos tokens gerados pelo
         // CommonTokenStream
         HashSet<String> lexemas = new HashSet<String>();
+        int tipo;
+        String symbolicName;
         for (Token token : commonTokenStream.getTokens()) {
-            int type = token.getType();
-            String symbolicName = CC20212Lexer.VOCABULARY.getSymbolicName(type);
+            tipo = token.getType();
+            symbolicName = CC20212Lexer.VOCABULARY.getSymbolicName(tipo);
             if (symbolicName.equals("IDENT")) {
                 lexemas.add(token.getText());
             }
         }
+
+        // criando os arquivos de saida (tabela de simbolos e de tokens)
+        // tabela de simbolos:
+        ArrayList<String> tokenList = new ArrayList<>();
+        for (Token token : commonTokenStream.getTokens()) {
+            tipo = token.getType();
+            symbolicName = CC20212Lexer.VOCABULARY.getSymbolicName(tipo);
+            String lexema = token.getText();
+            int linha = token.getLine();
+            int indiceInicio = token.getStartIndex();
+            int indiceFinal = token.getStopIndex();
+            int indiceToken = token.getTokenIndex();
+
+            String itemLista = "";
+
+            itemLista = indiceToken + "º Token -> [Lexema: " + lexema + "\t Tipo: " + symbolicName + "\t Linha: "
+                    + linha + "\t Indice Inicial: " + indiceInicio + "\t Indice Final: " + indiceFinal + ";\n";
+            tokenList.add(itemLista);
+        }
+        System.out.println(tokenList);
 
     }
 }
