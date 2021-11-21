@@ -1,3 +1,5 @@
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -58,13 +60,27 @@ public class Main {
 
                 String itemLista = "";
 
-                itemLista = indiceToken + "º Token -> [Lexema: " + lexema + "\t Tipo: " + symbolicName + "\t Linha: "
-                        + linha + "\t Indice Inicial: " + indiceInicio + "\t Indice Final: " + indiceFinal + ";\n";
+                itemLista = indiceToken + 1 + "º Token -> Lexema: \t" + lexema + "\t Tipo: " + symbolicName
+                        + "\t Linha: " + linha + "\t Indice Inicial: " + indiceInicio + "\t Indice Final: "
+                        + indiceFinal + "\n";
                 tokenList.add(itemLista);
             }
             System.out.println(tokenList);
-            // Salvando a tabela de simbolos em arquivo de saída:
-            System.out.println(nomeArquivo);
+            // Salvando a tabela de tonkens em arquivo de saída:
+            File dirAtual = new File(".");
+            File dirSaidaToken = new File(dirAtual.getCanonicalPath() + "/saida_lexico/tabela_tokens");
+            // verifica se ja não existe a pasta:
+            if (!dirSaidaToken.exists()) {
+                dirSaidaToken.mkdirs();
+            }
+            File dirArquivo = new File(dirSaidaToken + "/" + nomeArquivo);
+            FileWriter fileWriter = new FileWriter(dirArquivo);
+            fileWriter.write(
+                    "--------------------------------------- Tabela de Tokens ---------------------------------------\n");
+            for (String linha : tokenList) {
+                fileWriter.write(linha);
+            }
+            fileWriter.close();
 
         } catch (Error e) {
             System.out.println(e.getMessage());
