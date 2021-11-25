@@ -32,7 +32,7 @@ public class Main {
             // verificando a existência de erros no analisador léxico:
             int erros = cc20212Parser.getNumberOfSyntaxErrors();
             if (erros > 0)
-                System.out.println("Existem erros léxicos! O mesmo pode ser verificado acima");
+                throw new Error("Existem erros léxicos! O mesmo pode ser verificado acima");
 
             // criando um set com os lexemas a partir dos tokens gerados pelo
             // CommonTokenStream (tabela de Simbolos):
