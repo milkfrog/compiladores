@@ -12,6 +12,10 @@ import org.antlr.v4.runtime.Token;
 public class Main {
     public static void main(String[] args) throws IOException {
 
+        // Integrantes:
+        // Marcelo Pietro Grutzmacher Contin (19150807)
+        // Matheus Leonel Balduino (17202305)
+
         try {
             if (args.length > 1) {
                 throw new Error("Deve haver apenas 1 argumento!");
