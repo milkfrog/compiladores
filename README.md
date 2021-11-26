@@ -25,5 +25,7 @@ Os mesmos são gerados na pasta /saida_lexico.
 ## Exemplos de arquivos testes já incluídos:
 
 ```
-make argumento="op_arrays.lcc"
+make argumento="arrays.lcc"
+make argumento="calculator.lcc"
+make argumento="factorial.lcc"
 ```

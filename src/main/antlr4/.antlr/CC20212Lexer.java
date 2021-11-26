@@ -1,4 +1,4 @@
-// Generated from /home/matheus/Documents/codebase/compiladores/src/main/antlr4/CC20212.g4 by ANTLR 4.8
+// Generated from /home/milkfrog/git/compiladores/src/main/antlr4/CC20212.g4 by ANTLR 4.8
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Token;

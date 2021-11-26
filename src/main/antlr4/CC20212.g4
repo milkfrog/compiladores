@@ -73,7 +73,7 @@ factor:
 
 lvalue: IDENT ( '[' numexpression ']')*;
 
-/* Nossa contribuição para finalizar a gramática: */
+/* Nossa contribuição para finalizar a gramática e deixar ela mais "programming language like" */
 
 INT: 'int';
 
