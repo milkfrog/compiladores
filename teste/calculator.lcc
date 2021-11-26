@@ -1,0 +1,105 @@
+def sum(int a, int b, int c) {
+  int d;
+  d = a + b;
+
+  c = d;
+  return;
+}
+
+def sub(int a, int b, int c) {
+  int d;
+  d = a - b;
+
+  c = d;
+  return;
+}
+
+def mult(int a, int b, int d) {
+  int c;
+  int i;
+
+  c = 0;
+  for (i = 0; i < a; i = i + 1) {
+    c = sum(c, b);
+  }
+
+  d = c;
+
+  return;
+}
+
+def exp(int a, int b, int d) {
+  int c;
+  int i;
+
+  c = 1;
+  for (i = 0; i < b; i = i + 1) {
+    c = mult(c, a);
+  }
+
+  d = c;
+
+  return;
+}
+
+def main() {
+  print("Calculator\n");
+  print("Operations: +, -, *, **\n");
+
+  print("Give-me an operand: ");
+  int a;
+  read a;
+  print("\n");
+
+  print("Give-me another operand: ");
+  int b;
+  read b;
+  print("\n");
+
+  print("What operation do you want to do? ");
+  string op;
+  read op;
+  print("\n");
+
+  if (op == "+") {
+    int result;
+    result = sum(a, b);
+
+    print("Result: ");
+    print(result);
+    print("\n");
+    return;
+  }
+  if (op == "-") {
+    int result;
+    result = sub(a, b);
+    
+    print("Result: ");
+    print(result);
+    print("\n");
+    return;
+  }
+  if (op == "*") {
+    int result;
+    result = mult(a, b);
+    
+    print("Result: ");
+    print(result);
+    print("\n");
+    return;
+  }
+  if (op == "**") {
+    int result;
+    result = exp(a, b);
+    
+    print("Result: ");
+    print(result);
+    print("\n");
+    return;
+  }
+
+  print("[ ERROR ] The given operator is unrecognizable: ");
+  print(op);
+  print("\n");
+  return;
+}
