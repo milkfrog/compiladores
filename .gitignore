@@ -3,4 +3,4 @@ target/
 .classpath
 .project
 *.prefs
-saida_lexico/
+saida_sintatico/

@@ -1,11 +1,11 @@
-# Trabalho EP1 de Construção de Compiladores (INE5426)
+# Trabalho EP2 de Construção de Compiladores (INE5426)
 
 ## Grupo:
 
 - Marcelo Pietro Grutzmacher Contin (19150807)
 - Matheus Leonel Balduino (17202305)
 
-## Rodando o Analisador Léxico:
+## Rodando o Analisador Sintático:
 
 Para Rodar o programa basta executar o Makefile da seguinte forma:
 
@@ -16,12 +16,13 @@ make argumento="<nomeArquivo.lcc>"
 > OBS1: O arquivo deve estar dentro do diretório /teste  
 > OBS2: É permitido rodar apenas 1 arquivo por execução  
 > OBS3: Somente é permitido argumentos do tipo .lcc  
-> OBS4: A linguagem utilizada é o Java rodando na versão 11.0.10 como solicitado pelo Professor  
+> OBS4: A linguagem utilizada é o Java rodando na versão 11.0.10 como solicitado pelo Professor no sistema operacional Linux
 
 ## Saída:
 
 A saída do programa consiste em 2 arquivos (Tabela de Simbolos e tabela de Tokens).  
-Os mesmos são gerados na pasta /saida_lexico.
+Os mesmos são gerados na pasta /saida_sintatico.
+É gerado também uma árvore sintática na execução do programa que abre automaticamente.
 
 ## Exemplos de arquivos testes já incluídos:
 
@@ -29,4 +30,5 @@ Os mesmos são gerados na pasta /saida_lexico.
 make argumento="arrays.lcc"
 make argumento="calculator.lcc"
 make argumento="factorial.lcc"
+make argumento="sort.lcc"
 ```

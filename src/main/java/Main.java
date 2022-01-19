@@ -2,12 +2,15 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.gui.TreeViewer;
 
 public class Main {
     public static void main(String[] args) throws IOException {
@@ -27,16 +30,17 @@ public class Main {
             String nomeArquivo = argumento.split("\\.")[0];
             String path = "./teste/" + argumento;
             CharStream charStream = CharStreams.fromFileName(path);
-            CC20212Lexer cc20212Lexer = new CC20212Lexer(charStream);
-            CommonTokenStream commonTokenStream = new CommonTokenStream(cc20212Lexer);
-            CC20212Parser cc20212Parser = new CC20212Parser(commonTokenStream);
+            ConvCC20212Lexer convCC20212Lexer = new ConvCC20212Lexer(charStream);
+            CommonTokenStream commonTokenStream = new CommonTokenStream(convCC20212Lexer);
+            ConvCC20212Parser convCC20212Parser = new ConvCC20212Parser(commonTokenStream);
 
-            cc20212Parser.program();
+            System.out.println("Iniciando a Análise Sintática");
+            ParseTree parseTree = convCC20212Parser.program();
 
-            // verificando a existência de erros no analisador léxico:
-            int erros = cc20212Parser.getNumberOfSyntaxErrors();
+            // verificando a existência de erros Sintáticos no analisador léxico:
+            int erros = convCC20212Parser.getNumberOfSyntaxErrors();
             if (erros > 0)
-                throw new Error("Existem erros léxicos! O mesmo pode ser verificado acima");
+                throw new Error("Existem erros Sintáticos! O mesmo pode ser verificado acima");
 
             // criando um set com os lexemas a partir dos tokens gerados pelo
             // CommonTokenStream (tabela de Simbolos):
@@ -45,7 +49,7 @@ public class Main {
             String symbolicName;
             for (Token token : commonTokenStream.getTokens()) {
                 tipo = token.getType();
-                symbolicName = CC20212Lexer.VOCABULARY.getSymbolicName(tipo);
+                symbolicName = ConvCC20212Lexer.VOCABULARY.getSymbolicName(tipo);
                 if (symbolicName.equals("IDENT")) {
                     lexemas.add(token.getText());
                 }
@@ -55,7 +59,7 @@ public class Main {
             ArrayList<String> tokenList = new ArrayList<>();
             for (Token token : commonTokenStream.getTokens()) {
                 tipo = token.getType();
-                symbolicName = CC20212Lexer.VOCABULARY.getSymbolicName(tipo);
+                symbolicName = ConvCC20212Lexer.VOCABULARY.getSymbolicName(tipo);
                 String lexema = token.getText();
                 int linha = token.getLine();
                 int indiceInicio = token.getStartIndex();
@@ -71,7 +75,7 @@ public class Main {
             }
             // Salvando a tabela de tonkens em arquivo de saída:
             File dirAtualToken = new File(".");
-            File dirSaidaToken = new File(dirAtualToken.getCanonicalPath() + "/saida_lexico/tabela_tokens");
+            File dirSaidaToken = new File(dirAtualToken.getCanonicalPath() + "/saida_sintatico/tabela_tokens");
             // verifica se ja não existe a pasta:
             if (!dirSaidaToken.exists()) {
                 dirSaidaToken.mkdirs();
@@ -87,7 +91,7 @@ public class Main {
 
             // Criando a tabela de Simbolos:
             File dirAtualSimbolo = new File(".");
-            File dirSaidaSimbolo = new File(dirAtualSimbolo.getCanonicalPath() + "/saida_lexico/tabela_simbolos");
+            File dirSaidaSimbolo = new File(dirAtualSimbolo.getCanonicalPath() + "/saida_sintatico/tabela_simbolos");
             // verifica se ja não existe a pasta:
             if (!dirSaidaSimbolo.exists()) {
                 dirSaidaSimbolo.mkdirs();
@@ -102,7 +106,13 @@ public class Main {
                 contador++;
             }
             fileWriterSimbolo.close();
-            System.out.println("Finalizado a Análise Léxica!\nAs tabelas foram geradas na pasta saida_lexico!");
+
+            TreeViewer treeViewer = new TreeViewer(Arrays.asList(convCC20212Parser.getRuleNames()), parseTree);
+            treeViewer.open();
+
+            System.out.println("Finalizado a Análise Sintática!\nAs tabelas foram geradas na pasta saida_sintatica!");
+            if (erros == 0) System.out.println("Finalizado sem erros e árvore sintática gerada com sucesso!");
+
         } catch (Error e) {
             System.out.println(e.getMessage());
         }
