@@ -19,6 +19,10 @@ public class Main {
         // Marcelo Pietro Grutzmacher Contin (19150807)
         // Matheus Leonel Balduino (17202305)
 
+        String CorVerdeBold = "\033[1;32m";
+        String CorAzulBold = "\033[1;34m";
+        String ResetCor = "\033[0m";
+
         try {
             if (args.length > 1) {
                 throw new Error("Deve haver apenas 1 argumento!");
@@ -29,12 +33,15 @@ public class Main {
             }
             String nomeArquivo = argumento.split("\\.")[0];
             String path = "./teste/" + argumento;
+
+            System.out.println("\n\n\n\n" + CorAzulBold + "Iniciando a Análise Léxica" + ResetCor);
+
             CharStream charStream = CharStreams.fromFileName(path);
             ConvCC20212Lexer convCC20212Lexer = new ConvCC20212Lexer(charStream);
             CommonTokenStream commonTokenStream = new CommonTokenStream(convCC20212Lexer);
             ConvCC20212Parser convCC20212Parser = new ConvCC20212Parser(commonTokenStream);
 
-            System.out.println("Iniciando a Análise Sintática");
+            System.out.println(CorAzulBold + "Iniciando a Análise Sintática" + ResetCor);
             ParseTree parseTree = convCC20212Parser.program();
 
             // verificando a existência de erros Sintáticos no analisador léxico:
@@ -75,7 +82,7 @@ public class Main {
             }
             // Salvando a tabela de tonkens em arquivo de saída:
             File dirAtualToken = new File(".");
-            File dirSaidaToken = new File(dirAtualToken.getCanonicalPath() + "/saida_sintatico/tabela_tokens");
+            File dirSaidaToken = new File(dirAtualToken.getCanonicalPath() + "/saida/tabela_tokens");
             // verifica se ja não existe a pasta:
             if (!dirSaidaToken.exists()) {
                 dirSaidaToken.mkdirs();
@@ -91,7 +98,7 @@ public class Main {
 
             // Criando a tabela de Simbolos:
             File dirAtualSimbolo = new File(".");
-            File dirSaidaSimbolo = new File(dirAtualSimbolo.getCanonicalPath() + "/saida_sintatico/tabela_simbolos");
+            File dirSaidaSimbolo = new File(dirAtualSimbolo.getCanonicalPath() + "/saida/tabela_simbolos");
             // verifica se ja não existe a pasta:
             if (!dirSaidaSimbolo.exists()) {
                 dirSaidaSimbolo.mkdirs();
@@ -110,8 +117,8 @@ public class Main {
             TreeViewer treeViewer = new TreeViewer(Arrays.asList(convCC20212Parser.getRuleNames()), parseTree);
             treeViewer.open();
 
-            System.out.println("Finalizado a Análise Sintática!\nAs tabelas foram geradas na pasta saida_sintatica!");
-            if (erros == 0) System.out.println("Finalizado sem erros e árvore sintática gerada com sucesso!");
+            System.out.println("\n\n\n\n" + CorVerdeBold + "Finalizado com SUCESSO!\nAs tabelas foram geradas na pasta saida!" + ResetCor);
+            if (erros == 0) System.out.println(CorVerdeBold + "Finalizado sem erros e árvore sintática gerada com sucesso!" + ResetCor);
 
         } catch (Error e) {
             System.out.println(e.getMessage());
