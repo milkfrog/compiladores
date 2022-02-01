@@ -1,4 +1,4 @@
-# Trabalho EP2 de Construção de Compiladores (INE5426)
+# Trabalho EP3 de Construção de Compiladores (INE5426)
 
 ## Grupo:
 
