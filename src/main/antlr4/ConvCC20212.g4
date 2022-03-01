@@ -1,309 +1,499 @@
 grammar ConvCC20212;
 
-program:
+@header {
+import ExpressionTree.*;
+import Scope.*;
+import SymbolTable.*;
+import Enum.*;
+import GCI.*;
 
- 	(statement 
-	| funclist)? 
-;
+import java.util.ArrayList;
+import java.util.List;
+import static java.lang.System.exit;
+}
 
-funclist: 
+@parser::members {
+    List<ExpressionTree> trees = new ArrayList<ExpressionTree>();
 
-	funcdef funclist2 
-;
+    List<ScopeNode> scopes = new ArrayList<ScopeNode>();
 
-funclist2:  
+    LinkedStack scopeStack = new LinkedStack();
 
-	funclist?
-;
+    int temporaryCounter, labelCounter, funcCounter, beginCounter, exprTrueCounter, exprFalseCounter = 0;
 
-funcdef:
-	 DEF IDENT LPAREN paramlist RPAREN LBRACE statelist RBRACE
-;
+    ExpressionTree addTree(Node node) {
+        ExpressionTree expTree = new ExpressionTree(node, temporaryCounter);
+        Node root = expTree.getRoot();
+        String result = expTree.validateTree(root);
+        if (result.equals("")) {
+            String msg = "A árvore abaixo contém experssões inválidas\n" + expTree.getRoot().toString();
+            notifyErrorListeners("Expressão Inválida detectada");
+            throw new ParseCancellationException('\n' + msg);
+        }
+
+        trees.add(expTree);
+        return expTree;
+    }
+
+    String createLabel(String type) {
+        String s = "";
+        switch (type) {
+            case "label": {
+                s = "L_" + labelCounter;
+                labelCounter++;
+                break;
+            }
+            case "func": {
+                s = "FUNC_" + funcCounter;
+                funcCounter++;
+                break;
+            }
+            case "begin": {
+                s = "BEGIN_" + beginCounter;
+                beginCounter++;
+                break;
+            }
+            case "exprTrue": {
+                s = "EXPR_TRUE_" + exprTrueCounter;
+                exprTrueCounter++;
+                break;
+            }
+            case "exprFalse": {
+                s = "EXPR_FALSE_" + exprFalseCounter;
+                exprFalseCounter++;
+                break;
+            }
+        }
+        return s;
+    }
+
+    GenerateReturn generateCode(ExpressionTree expTree) {
+        StringBuilder sb = new StringBuilder();
+        Node root = expTree.getRoot();
+        GenerateReturn generateReturn = new GenerateReturn(expTree.generateCode(root, sb), sb.toString());
+        temporaryCounter = expTree.getCounter();
+        return generateReturn;
+    }
+
+    void insertIdent(String lexeme, boolean isFunction, String type, int declarationLine) {
+        ScopeNode actualScope = scopeStack.peek();
+        SemanticReports report = actualScope.getSymbolTable().insert(lexeme, isFunction, type, declarationLine);
+        if (report == SemanticReports.IDENT_ALREADY_EXISTS) {
+            int previousDeclarationLine = actualScope.getSymbolTable().getEntry(lexeme).getDeclarationLine();
+            String msg = "A variável " + lexeme + " já foi declarada anteriormente na linha " + previousDeclarationLine;
+            notifyErrorListeners(msg);
+            throw new ParseCancellationException('\n' + msg);
+        }
+    }
+
+    void putScope(boolean isFor) {
+        scopeStack.push(new SymbolTable(), isFor);
+    }
+
+    void popScope() {
+        scopes.add(scopeStack.pop());
+    }
+
+    void verifyBreak() {
+        ScopeNode actualScope = scopeStack.peek();
+        if (!actualScope.isFor()) {
+            String msg = "Um comando break foi utilizado fora de uma operação 'for'";
+            notifyErrorListeners(msg);
+            throw new ParseCancellationException('\n' + msg);
+        }
+    }
+
+    String getTypeOfIdent(String lexeme) {
+        ScopeNode previous = scopeStack.peek();
+        while (previous != null) {
+             SymbolTableEntry entry = previous.getSymbolTable().getEntry(lexeme);
+             if (entry != null) {
+                return entry.getType();
+             }
+             previous = previous.getPrevious();
+        }
+        String msg = "O identificador " + lexeme + " foi usado mas nunca definido!";
+        notifyErrorListeners(msg);
+        throw new ParseCancellationException('\n' + msg);
+    }
+}
+
+program
+	locals[String code]
+	@init {
+    {putScope(false);}
+    $code = "";
+}
+	@after {
+    popScope();
+    Utils.exportExpressionTrees(trees);
+    Utils.exportIntermediaryCode($code);
+    Utils.exportScopes(scopes);
+}:
+	statement[false, createLabel("label"), ""] {$code = $statement.code ;}
+	| funclist {$code = $funclist.code;}
+	|;
+
+funclist
+	returns[String code]
+	@init {
+        $code = "";
+    }:
+	funcdef funclist2 {$code = $funcdef.code + "\n" +  $funclist2.code;};
+
+funclist2
+	returns[String code]
+	@init {
+        $code = "";
+    }: funclist {$code = $funclist.code;} |;
+
+funcdef
+	returns[String code]
+	locals[String funcLabel, String next]
+	@init {
+        $code = "";
+        $funcLabel = createLabel("func");
+        $next = createLabel("label");
+    }:
+	DEF IDENT {insertIdent($IDENT.text, true, "function", $IDENT.line);} {putScope(false);} LPAREN
+		paramlist RPAREN LBRACE statelist[false, $next, ""] RBRACE {popScope();} {$code = $funcLabel + ":\n" + $statelist.code;
+		};
 
 paramlist:
+	TYPE_INT IDENT paramlist2 {insertIdent($IDENT.text, false, $TYPE_INT.text, $IDENT.line);}
+	| TYPE_FLOAT IDENT paramlist2 {insertIdent($IDENT.text, false, $TYPE_FLOAT.text, $IDENT.line);}
+	| TYPE_STRING IDENT paramlist2 {insertIdent($IDENT.text, false, $TYPE_STRING.text, $IDENT.line);
+		}
+	|;
 
-	(TYPE_INT IDENT paramlist2 
-	| TYPE_FLOAT IDENT paramlist2
-	| TYPE_STRING IDENT paramlist2 
-	)?
-;
+paramlist2: COMMA paramlist |;
 
-paramlist2:
-
-	( COMMA paramlist 
-	)?
-
-;
-
-statement:
-
-	vardecl SEMI 
-	| atribstat SEMI 
+statement[boolean isFor, String next, String breakNext]
+	returns[String code]
+	@init {
+        $code = "";
+    }:
+	vardecl SEMI
+	| atribstat1 SEMI {$code = $atribstat1.code;}
 	| printstat SEMI
-	| readstat SEMI 
+	| readstat SEMI
 	| returnstat SEMI
-	| ifstat 
-	| forstat 
-	| LBRACE statelist RBRACE 
-	| BREAK SEMI | SEMI
-;
+	| ifstat[isFor, next, breakNext] {$code = $ifstat.code;}
+	| forstat[next] {$code = $forstat.code;}
+	| LBRACE {putScope(isFor);} statelist[isFor, next, breakNext] RBRACE {popScope();} {$code = $statelist.code;
+		}
+	| BREAK {verifyBreak();} {$code = Generator.generateInconditionalDeviationCode($breakNext);}
+		SEMI
+	| SEMI;
+
+statelist[boolean isFor, String next, String breakNext]
+	returns[String code]
+	locals[String stmtNext]
+	@init {
+        $stmtNext = createLabel("label");
+    }:
+	statement[isFor, $stmtNext, breakNext] statelist2[isFor, next, breakNext] {$code = $statement.code + "\n" + $stmtNext + ":\n" +  $statelist2.code ;
+		};
+
+statelist2[boolean isFor, String next, String breakNext]
+	returns[String code]
+	@init {
+        $code = "";
+    }:
+	statelist[isFor, next, breakNext] {$code = $statelist.code;}
+	|;
 
 vardecl:
+	TYPE_INT IDENT a {insertIdent($IDENT.text, false, $TYPE_INT.text, $IDENT.line);}
+	| TYPE_FLOAT IDENT a {insertIdent($IDENT.text, false, $TYPE_FLOAT.text, $IDENT.line);}
+	| TYPE_STRING IDENT a {insertIdent($IDENT.text, false, $TYPE_STRING.text, $IDENT.line);};
 
-	TYPE_INT IDENT a 
-	| TYPE_FLOAT IDENT a 
-	| TYPE_STRING IDENT a
-;
+a: t1 a |;
 
-a:
-	(t1 a 
-	)?
-; 
+t1: LBRACK INT RBRACK;
 
-t1: 
-	LBRACK INT RBRACK;
+paramlistcall: IDENT paramlistcall2 |;
 
-atribstat:
-	
-	lvalue ASSIGN atribstat1 
-;
+paramlistcall2: COMMA paramlistcall |;
 
-atribstat1:
+printstat: PRINT expression[""];
 
-	IDENT  atribstat2
-	| allocexpression 
-	| ADD factor 
-	| SUB factor 
-	| INT
-  	| FLOAT
-  	| STRING
-	| NULL
-	| LPAREN numexpression RPAREN
-;
+readstat: READ lvalue[""];
 
- atribstat2: 
+returnstat: RETURN;
 
-	b d c expression2 
-	|   LPAREN paramlistcall RPAREN
-;
+ifstat[boolean isFor, String next, String breakNext]
+	returns[String code]
+	locals[String exprTrue, String exprFalse]
+	@init {
+        $exprTrue = createLabel("exprTrue");
+        $exprFalse = createLabel("exprFalse");
+    }:
+	IF LPAREN expression[$exprFalse] RPAREN LBRACE {putScope(isFor);} statelist[isFor, next, breakNext]
+		RBRACE {popScope();} ifstat1[isFor, next, breakNext] {
+	$code = $expression.code
+	        + $exprTrue + ":\n"
+	        + $statelist.code
+	        + Generator.generateInconditionalDeviationCode(next)
+	        + $exprFalse + ":\n"
+	        + $ifstat1.code;
+	};
 
-paramlistcall:
+ifstat1[boolean isFor, String next, String breakNext]
+	returns[String code]
+	@init {
+        $code = "";
+    }:
+	ELSE statement[isFor, next, breakNext] {$code = $statement.code;}
+	|;
 
-	(IDENT paramlistcall2
-	)?
-;
+forstat[String next]
+	returns[String code]
+	locals[String begin, String exprTrue]
+	@init {
+        $begin = createLabel("begin");
+        $exprTrue = createLabel("exprTrue");
+    }:
+	FOR LPAREN atribstat1 SEMI expression[next] SEMI atribstat1 RPAREN statement[true, $begin, next]
+		{
+	$code = $begin + ":\n"
+	    + $expression.code
+	    + $exprTrue + ":\n"
+	    + $statement.code
+	    + Generator.generateInconditionalDeviationCode($begin);
+	};
 
-paramlistcall2:
-
-	(COMMA paramlistcall 
-	)?
-; 
-
-printstat:
-
-	PRINT expression
-;
-
-readstat:
-
-	READ lvalue
-;
-
-returnstat:
-
-	RETURN
-;
-
-ifstat:
-
-	IF LPAREN expression RPAREN LBRACE statelist RBRACE ifstat1
-;
-
-ifstat1:
-
-	(ELSE statement 
-	)?
-;
-
-forstat:
-
-	FOR LPAREN atribstat SEMI expression SEMI atribstat RPAREN statement
-;
-
-statelist: 
-
-	statement statelist2
-;
-
-statelist2:
-
-	(statelist 
-	)?
-;	
-
-allocexpression:
-
-	NEW allocexpression1
-;
+allocexpression: NEW allocexpression1;
 
 allocexpression1:
+	TYPE_INT t2 b[null]
+	| TYPE_FLOAT t2 b[null]
+	| TYPE_STRING t2 b[null];
 
-	TYPE_INT t2 b 
-	| TYPE_FLOAT t2 b 
-	| TYPE_STRING t2 b
-;
+atribstat1
+	returns[String code]
+	@init {
+        $code = "";
+    }:
+	lvalue[""] ASSIGN atribstat2 {
+	    if (!$atribstat2.code.isEmpty()) {
+	        $code = $lvalue.code + $atribstat2.code + $lvalue.last + $ASSIGN.text + $atribstat2.last;
+	    }
+	};
 
-b:
-	(t2 b 
-	)?
-;
+atribstat2
+	returns[String code, String last]
+	locals[ExpressionTree expTree]
+	@init {
+        $code = "";
+        $last = "";
+        $expTree = new ExpressionTree();
+    }:
+	IDENT atribstat3[new Node($IDENT.text, getTypeOfIdent($IDENT.text))] {$code = $atribstat3.code; $last= $atribstat3.last;
+		}
+	| allocexpression
+	| ADD factor[$ADD.text] d[$factor.sin] c[$d.sin] expression2 {$expTree = addTree($c.sin);} {
+	    GenerateReturn generateReturn = generateCode($expTree);
+	    $code = generateReturn.getCode();
+	    $last = generateReturn.getLast();
+	}
+	| SUB factor[$SUB.text] d[$factor.sin] c[$d.sin] expression2 {$expTree = addTree($c.sin);} {
+	    GenerateReturn generateReturn = generateCode($expTree);
+	    $code = generateReturn.getCode();
+	    $last = generateReturn.getLast();
+	}
+	| INT d[new Node($INT.text, "int")] c[$d.sin] expression2 {$expTree = addTree($c.sin);} {
+	    GenerateReturn generateReturn = generateCode($expTree);
+	    $code = generateReturn.getCode();
+	    $last = generateReturn.getLast();
+	}
+	| FLOAT d[new Node($FLOAT.text, "float")] c[$d.sin] expression2 {$expTree = addTree($c.sin);} {
+	    GenerateReturn generateReturn = generateCode($expTree);
+	    $code = generateReturn.getCode();
+	    $last = generateReturn.getLast();
+	}
+	| STRING d[new Node($STRING.text, "string")] c[$d.sin] expression2 {$expTree = addTree($c.sin);}
+		{
+	    GenerateReturn generateReturn = generateCode($expTree);
+	    $code = generateReturn.getCode();
+	    $last = generateReturn.getLast();
+	}
+	| NULL d[null] c[null] expression2
+	| LPAREN numexpression RPAREN d[$numexpression.sin] c[$d.sin] expression2 {$expTree = addTree($c.sin);
+		} {
+	    GenerateReturn generateReturn = generateCode($expTree);
+	    $code = generateReturn.getCode();
+	    $last = generateReturn.getLast();
+	};
 
-t2:
-	LBRACK numexpression RBRACK
-;
+atribstat3[Node h]
+	returns[String code, String last]
+	locals[ExpressionTree expTree]
+	@init {
+            $code = "";
+            $last = "";
+            $expTree = new ExpressionTree();
+    }:
+	b[h] d[$b.sin] c[$d.sin] expression2 {$expTree = addTree($c.sin);} {
+	    GenerateReturn generateReturn = generateCode($expTree);
+	    $code = generateReturn.getCode();
+	    $last = generateReturn.getLast();
+	}
+	| LPAREN paramlistcall RPAREN {
+        String[] params = $paramlistcall.text.split(",");
+        String[] result = Generator.generateFunctionCallCode(h.getValue(), params);
+        $code = result[0];
+        $last = result[1];
+    };
 
-expression:
+b[Node type]
+	returns[Node sin]:
+	t2 b[type] {$sin = new Node("array", $t2.sin, $b.sin);}
+	| {$sin = type;};
 
-	numexpression expression2
-; 
+t2
+	returns[Node sin]:
+	LBRACK numexpression RBRACK {$sin = $numexpression.sin;};
 
-expression2:
+expression[String exprFalse]
+	returns[String code]:
+	numexpression expression2 {$code = Generator.generateConditionalDeviationCode("False " + $numexpression.last + $expression2.code, exprFalse);
+		};
 
-	(GT numexpression 
-	| LT numexpression 
-	| LE numexpression 
-	| GE numexpression 
-	| EQUAL numexpression 
-	| NOTEQUAL numexpression 
-	)?
-; 
+expression2
+	returns[String code]
+	@init {
+        $code = "";
+    }:
+	GT numexpression {$code = $GT.text + $numexpression.last;}
+	| LT numexpression {$code = $LT.text + $numexpression.last;}
+	| LE numexpression {$code = $LE.text + $numexpression.last;}
+	| GE numexpression {$code = $GE.text + $numexpression.last;}
+	| EQUAL numexpression {$code = $EQUAL.text + $numexpression.last;}
+	| NOTEQUAL numexpression {$code = $NOTEQUAL.text + $numexpression.last;}
+	|;
 
-numexpression:
+numexpression
+	returns[Node sin, String code, String last]
+	locals[ExpressionTree expTree]:
+	term c[$term.sin] {$sin = $c.sin; $expTree = addTree($sin);} {
+	    GenerateReturn generateReturn = generateCode($expTree);
+        $code = generateReturn.getCode();
+        $last = generateReturn.getLast();
+    };
 
-	term c
-;
+c[Node h]
+	returns[Node sin]:
+	t3[h] c[$t3.sin] {$sin = $c.sin;}
+	| {$sin = h;};
 
-c:
-	(t3 c 
-	)?
-;
+t3[Node h]
+	returns[Node sin]:
+	ADD term {$sin = new Node($ADD.text, h, $term.sin);}
+	| SUB term {$sin = new Node($SUB.text, h, $term.sin);};
 
-t3: 
-	ADD term 
-	| SUB term
-;
+term
+	returns[Node sin]:
+	unaryexpr d[$unaryexpr.sin] {$sin = $d.sin;};
 
-term:
-	 unaryexpr d
-;
+d[Node h]
+	returns[Node sin]:
+	t4[h] d[$t4.sin] {$sin = $d.sin;}
+	| {$sin = h;};
 
-d: 
-	(t4 d
-	)?
-;
+t4[Node h]
+	returns[Node sin]:
+	MUL unaryexpr {$sin = new Node($MUL.text, h, $unaryexpr.sin);}
+	| DIV unaryexpr {$sin = new Node($DIV.text, h, $unaryexpr.sin);}
+	| MOD unaryexpr {$sin = new Node($MOD.text, h, $unaryexpr.sin);};
 
-t4: 
-	MUL unaryexpr 
-	| DIV unaryexpr
-	| MOD unaryexpr
-;
+unaryexpr
+	returns[Node sin]:
+	ADD factor[$ADD.text] {$sin = $factor.sin;}
+	| SUB factor[$SUB.text] {$sin = $factor.sin;}
+	| factor[""] {$sin = $factor.sin;};
 
-unaryexpr:
-
-	ADD factor 
-	| SUB factor 
-	| factor
-;
-
-factor:
-	INT
-	| FLOAT
-	| STRING
+factor[String h]
+	returns[Node sin]:
+	INT {$sin = new Node(h + $INT.text, "int");}
+	| FLOAT {$sin = new Node(h + $FLOAT.text, "float");}
+	| STRING {$sin = new Node($STRING.text, "string");}
 	| NULL
-	| lvalue 
-	| LPAREN numexpression RPAREN
-;
+	| lvalue[h] {$sin = $lvalue.node;}
+	| LPAREN numexpression RPAREN {$sin = $numexpression.sin;};
 
-lvalue:
-	 IDENT b
-;
+lvalue[String h]
+	returns[Node node, String code, String last]
+	locals[ExpressionTree expTree]:
+	IDENT b[new Node(h + $IDENT.text, getTypeOfIdent($IDENT.text))] {$node = $b.sin; $expTree = addTree($node);
+		} {
+        GenerateReturn generateReturn = generateCode($expTree);
+        $code = generateReturn.getCode();
+        $last = generateReturn.getLast();
+	 };
 
-/* Nossa contribuição para finalizar a gramática e deixar ela mais "programming language like" */
+/*
+ * Keywords
+ */
+IF: 'if';
+FOR: 'for';
+ELSE: 'else';
+RETURN: 'return';
+READ: 'read';
+PRINT: 'print';
+NEW: 'new';
+BREAK: 'break';
+DEF: 'def';
 
-TYPE_INT: 'int';
-
-TYPE_FLOAT: 'float';
-
+/*
+ * Types
+ */
 TYPE_STRING: 'string';
-
+TYPE_FLOAT: 'float';
+TYPE_INT: 'int';
 NULL: 'null';
 
 INT: DIGITS;
-
 FLOAT: DIGITS '.' DIGITS | '.' DIGITS;
-
-STRING: '"' ~('"')* '"';
 
 fragment DIGITS: [0-9]+;
 
-IF: 'if';
+STRING: '"' ~('"')* '"';
+IDENT: [a-zA-Z_] ( [a-zA-Z0-9_])*;
 
-FOR: 'for';
+/*
+ * Symbols and Punctuation
+ */
 
-ELSE: 'else';
+LPAREN: '(';
+RPAREN: ')';
+LBRACE: '{';
+RBRACE: '}';
+LBRACK: '[';
+RBRACK: ']';
+SEMI: ';';
+COMMA: ',';
 
-RETURN: 'return';
+/*
+ * Arithmetic Operators
+ */
 
-READ: 'read';
+ASSIGN: '=';
+ADD: '+';
+SUB: '-';
+MUL: '*';
+DIV: '/';
+MOD: '%';
 
-PRINT: 'print';
+/*
+ * Relational Operators
+ */
 
-NEW: 'new';
-
-BREAK: 'break';
-
-DEF: 'def';
-
-ADD : '+';
-
-SUB : '-';
-
-DIV : '/';
-
-MUL : '*';
-
-MOD : '%';
-
-ASSIGN : '=';
-
-GT : '>';
-
-LT : '<';
-
-EQUAL : '==';
-
-LE : '<=';
-
-GE : '>=';
-
-NOTEQUAL : '!=';
-
-LPAREN : '(';
-
-RPAREN : ')';
-
-LBRACE : '{';
-
-RBRACE : '}';
-
-LBRACK : '[';
-
-RBRACK : ']';
-
-SEMI : ';';
-
-COMMA : ',';
-
-IDENT: [a-zA-Z_] ( [a-zA-Z0-9_] )*;
+GT: '>';
+LT: '<';
+EQUAL: '==';
+LE: '<=';
+GE: '>=';
+NOTEQUAL: '!=';
 
 WHITESPACE: [ \t\r\n]+ -> skip;

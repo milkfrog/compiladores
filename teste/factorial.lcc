@@ -1,78 +1,45 @@
-def main() 
-{
-	print "This is a Factorial calculator\n";
-  print "There's three different algorithms:\n";
-  print "- Classic\n";
-  print "- Top-down\n";
-  print "- Bottom-up\n";
-	
-	int n;
-	n = 15;
-
-	int array;
-	array = new int[n+1];
-	
-	int i;
-	for (i = 0; i <= n; i = i + 1) {
-		array[i] = 0;
-	}
-	print "Factorial of 15 using normal algorithm: ";
-	int result;
-  result = factorial(n);
-	print "Factorial of 15 using top-down algorithm: ";
-	int result_top_down;
-	result_top_down = factorial_TB(n, array);
-	print "Factorial of 15 using bottom-up algorithm: ";
-	int result_bottom_up;
-	result_bottom_up = factorial_BU(n);
-	
-	n = 35;
-	for (i = 0; i <= n; i = i + 1) {
-		array[i] = 0;
-	}
-	print "Factorial of 35 using normal algorithm: ";
-	result = factorial(n);
-	print "Factorial of 35 using top-down algorithm: ";
-	result_top_down = factorial_TB(n, array);
-	print "Factorial of 35 using bottom-up algorithm: ";
-	result_bottom_up = factorial_BU(n);
-}
-
-def factorial_TB(int n, int array) 
+def top_down_factorial(int n, int array) 
 {
 
 	if (n < 0) {
-		print "Result: 0";
+		print "Resultado: 0";
 		return;
 	}
+	
 	if (n <=1) {
-		print "Result: 1";
+		print "Resultado: 1";
 		return;
-  }
+	}
+	
 	if (array[n] != 0) {
-		print "Result: " + array[n];
+		print "Resultado: ";
+		print array[n];
 		return;
 	}
 	
 	int result;
 	int previous_n;
+	
 	previous_n = n - 1;
-	result = factorial_TB(previous_n, array);
+	result = top_down_factorial(previous_n, array);
 	
 	array[n] = n * result;
-	print "Result: " + array[n];
+	
+	print "Resultado: ";
+    print array[n];
 	return;	
 }
 
-def factorial_BU(int n) 
+def bottom_up_factorial(int n) 
 {
 	
 	if (n < 0) {
-		print "Result: 0";
+		print "Resultado: 0";
 		return;
 	}
+	
 	if (n <= 1) {
-		print "Result: 1";
+		print "Resultado: 1";
 		return;
 	}
 	
@@ -80,12 +47,15 @@ def factorial_BU(int n)
 	results = new int[n+1];
 	results[0] = 1;
 	results[1] = 1;
+	
 	int i;
+	
 	for( i = 2; i <= n; i = i + 1 ) {
 		results[i] = i * results[i-1];
 	}
 	
-	print "Result: " + results[n];
+	print "Resultado: ";
+    print results[n];
 	return;
 }
 
@@ -93,21 +63,70 @@ def factorial(int n)
 {
 
 	if (n < 0) {
-		print "Result: -1";
+		print "Resultado: -1";
 		return;
 	}
+	
 	if (n <= 1) {
-		print "Result: 1";
+		print "Resultado: 1";
 		return;
 	}
 	
 	int result;
 	int previous_factorial;
 	int previous_n;
+	
 	previous_n = n - 1;
 	previous_factorial = factorial(previous_n);
 	result = n * previous_factorial;
 	
-	print "Result: " + result;
+	print "Resultado: ";
+    print result;
+	
 	return;
+}
+
+def main() 
+{
+	print " Calculadora de Fatorial ";
+	
+	int n;
+	int array;
+	int result;
+	int result_top_down;
+	int result_bottom_up;
+	
+	n = 20;
+	
+	array = new int[n+1];
+	
+	int i;
+	
+	for (i = 0; i <= n; i = i + 1) {
+		array[i] = 0;
+	}
+	
+	print "---> Fatorial de 20 no algoritmo normal: ";
+	result = factorial(n);
+	
+	print "---> Fatorial de 20 c/ algoritmo top-down: ";
+	result_top_down = top_down_factorial(n, array);
+	
+	print "---> Fatorial de 20 c/ algoritmo bottom-up: ";
+	result_bottom_up = bottom_up_factorial(n);
+	
+	n = 50;
+	
+	for (i = 0; i <= n; i = i + 1) {
+		array[i] = 0;
+	}
+	
+	print "---> Fatorial de 50 no algoritmo normal: ";
+	result = factorial(n);
+	
+	print "---> Fatorial de 50 c/ algoritmo top-down: ";
+	result_top_down = top_down_factorial(n, array);
+	
+	print "---> Fatorial de 50 c/ algoritmo bottom-up: ";
+	result_bottom_up = bottom_up_factorial(n);
 }

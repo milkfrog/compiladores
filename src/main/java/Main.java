@@ -117,8 +117,18 @@ public class Main {
             TreeViewer treeViewer = new TreeViewer(Arrays.asList(convCC20212Parser.getRuleNames()), parseTree);
             treeViewer.open();
 
-            System.out.println("\n\n\n\n" + CorVerdeBold + "Finalizado com SUCESSO!\nAs tabelas foram geradas na pasta saida!" + ResetCor);
-            if (erros == 0) System.out.println(CorVerdeBold + "Finalizado sem erros e árvore sintática gerada com sucesso!" + ResetCor);
+            if (erros == 0) {
+                System.out.println(
+                        CorVerdeBold + "Finalizado sem erros e árvore sintática gerada com sucesso!" + ResetCor);
+                System.out.println(CorAzulBold + "Resumo:\n\n" + ResetCor);
+                System.out.println(CorAzulBold + "Todas as operações Aritméticas são válidas." + ResetCor);
+                System.out.println(CorAzulBold + "Todas as variáveis declaradas são válidas." + ResetCor);
+                System.out.println(
+                        CorAzulBold + "Todas as operações de break estão contidas em operações 'for'." + ResetCor);
+
+                System.out.println("\n\n\n\n" + CorVerdeBold
+                        + "Finalizado com SUCESSO!\nOs arquivos foram geradas na pasta saida!" + ResetCor);
+            }
 
         } catch (Error e) {
             System.out.println(e.getMessage());
